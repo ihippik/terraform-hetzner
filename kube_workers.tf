@@ -14,7 +14,7 @@ resource "hcloud_server" "k8s_worker" {
     hcloud_firewall.k8s_worker.id
   ]
 
-  user_data = file("./user-data/centos.sh")
+  user_data = file("./user-data/debian.sh")
 
   labels = {
     team     = var.team_name
