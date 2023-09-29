@@ -1,4 +1,4 @@
-resource "hcloud_server" "kube_worker" {
+resource "hcloud_server" "k8s_worker" {
   count = var.kube_worker_count
 
   name        = "worker-${count.index + 1}.${var.az_name}.hetzner.${var.domain}"
@@ -7,14 +7,14 @@ resource "hcloud_server" "kube_worker" {
   server_type = var.kube_worker_size
 
   ssh_keys = [
-    var.ssh_key_id
+    hcloud_ssh_key.default.id
   ]
 
   firewall_ids = [
-    hcloud_firewall.kube_worker.id
+    hcloud_firewall.k8s_worker.id
   ]
 
-  user_data = file("./user-data/prepare.sh")
+  user_data = file("./user-data/centos.sh")
 
   labels = {
     team     = var.team_name
@@ -26,16 +26,16 @@ resource "hcloud_server" "kube_worker" {
   }
 }
 
-resource "hcloud_server_network" "kube_worker" {
+resource "hcloud_server_network" "k8s_worker" {
   count = var.kube_worker_count
 
-  server_id  = hcloud_server.kube_worker[count.index].id
-  network_id = hcloud_network.private.id
-  ip         = cidrhost(hcloud_network_subnet.private.ip_range, 21 + count.index)
+  server_id  = hcloud_server.k8s_worker[count.index].id
+  network_id = hcloud_network.k8s_private.id
+  ip         = cidrhost(hcloud_network_subnet.k8s_private.ip_range, 21 + count.index)
 }
 
-resource "hcloud_firewall" "kube_worker" {
-  name = "kube-worker"
+resource "hcloud_firewall" "k8s_worker" {
+  name = "k8s-worker"
 
   rule {
     direction = "in"
@@ -101,5 +101,5 @@ resource "hcloud_firewall" "kube_worker" {
 }
 
 output "workers" {
-  value = hcloud_server.kube_worker
+  value = hcloud_server.k8s_worker
 }

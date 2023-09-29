@@ -1,4 +1,4 @@
-resource "hcloud_server" "kube_master" {
+resource "hcloud_server" "k8s_master" {
   count = var.kube_master_count
 
   name        = "master-${count.index + 1}.${var.az_name}.hetzner.${var.domain}"
@@ -7,14 +7,14 @@ resource "hcloud_server" "kube_master" {
   server_type = var.kube_master_size
 
   ssh_keys = [
-    var.ssh_key_id
+    hcloud_ssh_key.default.id
   ]
 
   firewall_ids = [
-    hcloud_firewall.kube_master.id
+    hcloud_firewall.k8s_master.id
   ]
 
-  user_data = file("./user-data/prepare.sh")
+  user_data = file("./user-data/centos.sh")
 
   labels = {
     team     = var.team_name
@@ -26,16 +26,16 @@ resource "hcloud_server" "kube_master" {
   }
 }
 
-resource "hcloud_server_network" "kube_master" {
+resource "hcloud_server_network" "k8s_master" {
   count = var.kube_master_count
 
-  server_id  = hcloud_server.kube_master[count.index].id
-  network_id = hcloud_network.private.id
-  ip         = cidrhost(hcloud_network_subnet.private.ip_range, 11 + count.index)
+  server_id  = hcloud_server.k8s_master[count.index].id
+  network_id = hcloud_network.k8s_private.id
+  ip         = cidrhost(hcloud_network_subnet.k8s_private.ip_range, 11 + count.index)
 }
 
-resource "hcloud_firewall" "kube_master" {
-  name = "kube-master"
+resource "hcloud_firewall" "k8s_master" {
+  name = "k8s-master"
 
   rule {
     direction = "in"
